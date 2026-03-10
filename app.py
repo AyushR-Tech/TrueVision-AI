@@ -517,7 +517,7 @@ def load_state_dict_models():
 def load_sd_pipeline(local_dir="stable_diffusion/local_model"):
     if not DIFFUSERS_AVAILABLE:
         raise ImportError("Diffusers not available")
-    
+
     local_path = Path(local_dir)
     if not local_path.exists() or not any(local_path.iterdir()):
         raise FileNotFoundError(f"Local SD model not found: {local_path}")
@@ -525,26 +525,86 @@ def load_sd_pipeline(local_dir="stable_diffusion/local_model"):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
-    try:
-        try:
-            pipe = StableDiffusionImg2ImgPipeline.from_pretrained(str(local_path), dtype=dtype, local_files_only=True)
-        except Exception:
-            pipe = StableDiffusionPipeline.from_pretrained(str(local_path), dtype=dtype, local_files_only=True)
+    st.info(f"Loading SD model on {device} with dtype {dtype}")
 
+    try:
+        # Try loading with optimal settings first
+        try:
+            pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
+                str(local_path),
+                dtype=dtype,
+                local_files_only=True,
+                low_cpu_mem_usage=True,
+                device_map="auto" if device == "cuda" else None
+            )
+        except Exception as e1:
+            st.warning(f"Failed to load Img2Img pipeline: {str(e1)}")
+            try:
+                pipe = StableDiffusionPipeline.from_pretrained(
+                    str(local_path),
+                    dtype=dtype,
+                    local_files_only=True,
+                    low_cpu_mem_usage=True,
+                    device_map="auto" if device == "cuda" else None
+                )
+            except Exception as e2:
+                st.warning(f"Failed to load base pipeline: {str(e2)}")
+                raise RuntimeError(f"Both pipeline types failed: Img2Img: {str(e1)}, Base: {str(e2)}")
+
+        # If on CPU and using float16, try float32 as fallback
         if device == "cpu" and dtype == torch.float16:
             try:
-                pipe = StableDiffusionImg2ImgPipeline.from_pretrained(str(local_path), dtype=torch.float32, local_files_only=True)
+                st.info("Retrying with float32 on CPU...")
+                pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
+                    str(local_path),
+                    dtype=torch.float32,
+                    local_files_only=True,
+                    low_cpu_mem_usage=True
+                )
             except Exception:
-                pipe = StableDiffusionPipeline.from_pretrained(str(local_path), dtype=torch.float32, local_files_only=True)
+                pipe = StableDiffusionPipeline.from_pretrained(
+                    str(local_path),
+                    dtype=torch.float32,
+                    local_files_only=True,
+                    low_cpu_mem_usage=True
+                )
 
+        # Move to device if possible
         try:
             pipe = pipe.to(device)
-        except Exception:
-            pass
+            st.success(f"Successfully loaded SD pipeline on {device}")
+        except Exception as e:
+            st.warning(f"Could not move pipeline to {device}: {str(e)}")
 
         return pipe
     except Exception as e:
-        raise RuntimeError("Failed to load SD pipeline") from e
+        st.error(f"Failed to load local model: {str(e)}")
+        st.info("Attempting to load from Hugging Face as fallback...")
+
+        # Fallback: Try loading from Hugging Face
+        try:
+            model_id = "runwayml/stable-diffusion-v1-5"
+            st.info(f"Loading {model_id} from Hugging Face...")
+
+            pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
+                model_id,
+                dtype=dtype,
+                low_cpu_mem_usage=True,
+                device_map="auto" if device == "cuda" else None
+            )
+
+            try:
+                pipe = pipe.to(device)
+                st.success(f"Successfully loaded {model_id} from Hugging Face on {device}")
+                return pipe
+            except Exception as e:
+                st.warning(f"Could not move pipeline to {device}: {str(e)}")
+                return pipe
+
+        except Exception as e2:
+            st.error(f"Failed to load from Hugging Face: {str(e2)}")
+            st.error("This might be due to insufficient memory or network issues.")
+            raise RuntimeError("Failed to load SD pipeline from both local and remote sources") from e
 
 # ========================================
 # DETECTION & GENERATION FUNCTIONS
