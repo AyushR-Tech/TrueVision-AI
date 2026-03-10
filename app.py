@@ -519,15 +519,16 @@ def load_sd_pipeline(local_dir="stable_diffusion/local_model"):
         raise ImportError("Diffusers not available")
 
     local_path = Path(local_dir)
-    if not local_path.exists() or not any(local_path.iterdir()):
-        raise FileNotFoundError(f"Local SD model not found: {local_path}")
-
     device = "cuda" if torch.cuda.is_available() else "cpu"
     dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
     st.info(f"Loading SD model on {device} with dtype {dtype}")
 
     try:
+        # if local directory is missing or empty, raise here to trigger fallback
+        if not local_path.exists() or not any(local_path.iterdir()):
+            raise FileNotFoundError(f"Local SD model not found: {local_path}")
+
         # Try loading with optimal settings first
         try:
             pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
