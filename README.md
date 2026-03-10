@@ -1,5 +1,7 @@
 # DeepFake AI System
 
+> **Important:** this repository does **not** include large model weights (Stable Diffusion, GAN, etc.). For deployment use or collaboration, the app either downloads models at runtime or you must place them manually. Keeping weights out of git keeps the repo light and works with Streamlit Cloud.
+
 A Streamlit app that provides:
 - Deepfake detection (VAE + ViT + heuristic fallback)
 - Image generation (GAN via a checkpoint wrapper + Stable Diffusion img2img via a local diffusers pipeline)
@@ -16,7 +18,7 @@ This README was updated to reflect recent changes: the app now includes a GAN up
 - scripts/download_diffusers_model.py — (optional) helper to download & save a diffusers pipeline locally
 - progan_generator_final.pt — GAN checkpoint (place in project root or upload via the app sidebar)
 - vae_model.pth, best_vit_deepfake_detector.pt — detector checkpoints (optional)
-- stable_diffusion/local_model/ — local diffusers pipeline directory (required for SD img2img)
+- stable_diffusion/local_model/ — local diffusers pipeline directory. **Not required**; if missing the app will attempt to download a model from Hugging Face. Do **not** commit this directory to git (it contains multiple gigabytes of weights).
 - requirements.txt — Python dependencies
 - .gitignore, .gitattributes — repository config (do NOT commit large model binaries)
 
@@ -25,7 +27,7 @@ This README was updated to reflect recent changes: the app now includes a GAN up
 ## Key changes / notes
 - The checkpoint loader now looks for VAE, ViT and GAN checkpoints only (no state-dict diffusion file).
 - The app provides a GAN checkpoint uploader in the sidebar; uploaded checkpoint is saved into the project folder so you can press "Load Checkpoint Models".
-- Stable Diffusion is loaded only from a local folder (`stable_diffusion/local_model`) and is cached using Streamlit's cache_resource; the app will not attempt to download models automatically.
+- Stable Diffusion is loaded preferably from a local folder (`stable_diffusion/local_model`) but the loader now has a fallback: if the folder is missing or empty the app will fetch `runwayml/stable-diffusion-v1-5` from Hugging Face on first run. This makes the repo much lighter and avoids deployment crashes.
 - SciPy is required by default (used for remapping and convolution). The app offers a lower-quality fallback if SciPy is unavailable, but install SciPy for best results.
 
 ---

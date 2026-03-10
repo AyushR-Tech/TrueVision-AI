@@ -5,4 +5,4 @@ __pycache__/
 *.pyc
 # IDE
 .vscode/
-.idea/
+.idea/stable_diffusion/local_model/
