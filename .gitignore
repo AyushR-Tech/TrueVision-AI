@@ -3,8 +3,6 @@
 # Python cache & bytecode
 __pycache__/
 *.pyc
-# Local models and large binaries (tracked with Git LFS)
-stable_diffusion/local_model/
 # IDE
 .vscode/
 .idea/
