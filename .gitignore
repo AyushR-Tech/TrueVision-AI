@@ -3,12 +3,8 @@
 # Python cache & bytecode
 __pycache__/
 *.pyc
-# Local models and large binaries
+# Local models and large binaries (tracked with Git LFS)
 stable_diffusion/local_model/
-models/
-progan_generator_final.pt
-vae_model.pth
-best_vit_deepfake_detector.pt
 # IDE
 .vscode/
 .idea/
