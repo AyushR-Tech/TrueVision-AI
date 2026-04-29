@@ -205,7 +205,7 @@ class UsageMonitor:
 # ========================================
 
 st.set_page_config(
-    page_title="DeepFake AI System with Ethics",
+    page_title="TrueVision AI",
     page_icon="🔍",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -260,10 +260,12 @@ st.markdown("""
     }
     .ethical-warning {
         background: #402A96;
+        color: white;
         border-left: 4px solid #ffc107;
         padding: 1rem;
         margin: 1rem 0;
         border-radius: 5px;
+        line-height: 1.6;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -931,7 +933,7 @@ if 'models_loaded' not in st.session_state:
 # MAIN UI
 # ========================================
 
-st.markdown('<h1 class="main-header">🔍 DeepFake AI System with Ethical Safeguards</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header">🔍 TrueVision AI</h1>', unsafe_allow_html=True)
 st.markdown('<p style="text-align: center; color: #666; font-size: 1.1rem;">Image Authentication & Responsible Generation</p>', unsafe_allow_html=True)
 
 # Sidebar
@@ -1038,37 +1040,6 @@ with tab1:
             </div>
             """, unsafe_allow_html=True)
             
-            st.markdown("#### Model Breakdown")
-            
-            col_vae, col_vit = st.columns(2)
-            
-            with col_vae:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <h4>🧠 VAE Model</h4>
-                    <p style="font-size: 1.5rem; font-weight: bold; color: {'#28a745' if results['vae']['prediction'] == 'REAL' else '#dc3545'};">
-                        {results['vae']['prediction']}
-                    </p>
-                    <p>Confidence: {results['vae']['confidence']:.1f}%</p>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            with col_vit:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <h4>👁️ ViT Model</h4>
-                    <p style="font-size: 1.5rem; font-weight: bold; color: {'#28a745' if results['vit']['prediction'] == 'REAL' else '#dc3545'};">
-                        {results['vit']['prediction']}
-                    </p>
-                    <p>Confidence: {results['vit']['confidence']:.1f}%</p>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            st.markdown("#### Probability Distribution")
-            vae_p = results.get('vae', {}).get('probability', 0.5)
-            vit_p = results.get('vit', {}).get('probability', 0.5)
-            st.progress(vae_p, text=f"VAE: {vae_p*100:.1f}% Real")
-            st.progress(vit_p, text=f"ViT: {vit_p*100:.1f}% Real")
         else:
             st.info("No detection results yet. Upload an image and click '🔍 Analyze Image'.")
 
@@ -1113,7 +1084,7 @@ with tab2:
             
             gen_method = st.radio(
                 "Method", 
-                ["GAN (state)", "Diffusion (img2img)"] if DIFFUSERS_AVAILABLE and st.session_state.sd_pipeline else ["GAN (state)"],
+                ["Diffusion (img2img)"],
                 horizontal=True
             )
             
@@ -1121,7 +1092,7 @@ with tab2:
                 "Prompt (for Diffusion):", 
                 value="", 
                 help="Describe the desired output",
-                disabled=(gen_method != "Diffusion (img2img)")
+                disabled=False
             )
             
             # Purpose declaration
@@ -1155,7 +1126,7 @@ with tab2:
                             image_gen, 
                             st.session_state.state_models,
                             st.session_state.device,
-                            method='gan' if gen_method == "GAN (state)" else 'diffusion',
+                            method='diffusion',
                             prompt=prompt
                         )
                         
