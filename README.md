@@ -1,4 +1,4 @@
-# DeepFake AI System
+# TrueVision AI
 
 > **Important:** this repository does **not** include large model weights (Stable Diffusion, GAN, etc.). For deployment use or collaboration, the app either downloads models at runtime or you must place them manually. Keeping weights out of git keeps the repo light and works with Streamlit Cloud.
 
